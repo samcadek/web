@@ -2,16 +2,13 @@
 session_start();
 $result = uniqid();    
 $_SESSION["symbol"] = $result;
-#upload z w3schools https://www.w3schools.com/php/php_file_upload.asp (potom jeste upravim tohle je jen kvuli tomu sifrovani)
-$target_dir = "uploads/";
+$target_dir = "uploads5/";
 $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
 $target_file2 = $target_dir . $_SESSION["symbol"].basename($_FILES["fileToUpload"]["name"]);
 $uploadOk = 1;
 $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
 $_SESSION["nazev"] = $target_file2;
-
-
-// Check if file already exists
+//$target_file2 = $target_dir . $_SESSION["symbol"].basename($_FILES["fileToUpload"]["name"]);
 if (file_exists($target_file)) {
   echo "Sorry, file already exists.";
   $uploadOk = 0;
@@ -41,43 +38,17 @@ if ($uploadOk == 0) {
     echo "Sorry, there was an error uploading your file.";
   }
 }
-
-
-//echo $_FILES["fileToUpload"]["name"];
-function Cipher($ch, $key)
-{
-    if (!ctype_alpha($ch))
-        return $ch;
-
-    $offset = ord(ctype_upper($ch) ? 'A' : 'a');
-    return chr(fmod(((ord($ch) + $key) - $offset), 26) + $offset);
-}
-function Encipher($input, $key)
-{
-    $output = "";
-
-    $inputArr = str_split($input);
-    foreach ($inputArr as $ch)
-        $output .= Cipher($ch, $key);
-
-    return $output;
-}
-
-function Decipher($input, $key)
-{
-    return Encipher($input, 26 - $key);
-}
-
+$method = "DES-EDE3";
+$key = "17839778773fadde0066e4578710928988398877bb123789";
+$options = 0;
+$key = pack("H*", $key);
 $filename = $target_file2;   
 $fp = fopen($filename, "r");//open file in read mode    
-  
-$contents = fread($fp, filesize($filename));//read file    
-$text = fread($fp,filesize($filename));
-$cipherText = Encipher($text, 3);
-$plainText = Decipher($cipherText, 3);
-$cipherText2 = urlencode($cipherText);
-$m = Decipher($contents, 3); 
-echo $m;  
-header("Location: /stazeni.php?heslo=$m");
+$contents = fread($fp, filesize($filename));//read file 
+$text = fread($fp, filesize($filename));
+$enc = openssl_encrypt($contents, $method, $key, $options);
+$dec = openssl_decrypt($enc, $method, $key, $options);
+$_SESSION["text"] = $enc;
+header("Location: /stazeni2.php");
 fclose($fp);
 ?>

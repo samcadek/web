@@ -8,30 +8,50 @@
 
 <?php
 
+#aes
+function encrypt($plaintext, $password) {
+    $method = "AES-256-CBC";
+    $key = hash('sha256', $password, true);
+    $iv = openssl_random_pseudo_bytes(16);
 
-$key = 'bRuD5WYw5wd0rdHR9yLlM6wt2vteuiniQBqE70nAuhU=';
+    $ciphertext = openssl_encrypt($plaintext, $method, $key, OPENSSL_RAW_DATA, $iv);
+    $hash = hash_hmac('sha256', $ciphertext . $iv, $key, true);
 
-function my_encrypt($data, $key) {
-    $encryption_key = base64_decode($key);
-    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
-    $encrypted = openssl_encrypt($data, 'aes-256-cbc', $encryption_key, 0, $iv);
-    return base64_encode($encrypted . '::' . $iv);
+    return $iv . $hash . $ciphertext;
 }
 
-function my_decrypt($data, $key) {
-    $encryption_key = base64_decode($key);
-    list($encrypted_data, $iv) = explode('::', base64_decode($data), 2);
-    return openssl_decrypt($encrypted_data, 'aes-256-cbc', $encryption_key, 0, $iv);
+function decrypt($ivHashCiphertext, $password) {
+    $method = "AES-256-CBC";
+    $iv = substr($ivHashCiphertext, 0, 16);
+    $hash = substr($ivHashCiphertext, 16, 32);
+    $ciphertext = substr($ivHashCiphertext, 48);
+    $key = hash('sha256', $password, true);
+
+    if (!hash_equals(hash_hmac('sha256', $ciphertext . $iv, $key, true), $hash)) return null;
+
+    return openssl_decrypt($ciphertext, $method, $key, OPENSSL_RAW_DATA, $iv);
 }
-$password_plain = 'samuel';
-echo $password_plain . "<br>";
+$encrypted = encrypt('zprava', 'password'); // this yields a binary string
+echo $encrypted;
+echo "<br>";
+echo decrypt($encrypted, 'password');
+// decrypt($encrypted, 'wrong password') === null
 
-$password_encrypted = my_encrypt($password_plain, $key);
-$password_encrypted2 = urlencode($password_encrypted);
-echo $password_encrypted . "<br>";
+#triple des
+$data = "ahoj";
+$method = "DES-EDE3";
+$key = "17839778773fadde0066e4578710928988398877bb123789";
+$options = 0;
 
-echo "<a href=\stazeni.php?heslo=$password_encrypted2>".$password_encrypted.'</a>'."<br>";
-$password_decrypted = my_decrypt($password_encrypted, $key);
+// transform the key from hex to string
+$key = pack("H*", $key);
+
+// encrypt
+$enc = openssl_encrypt($data, $method, $key, $options);
+// decrypt
+$dec = openssl_decrypt($enc, $method, $key, $options);
+
+echo "plain: ".$data." encrypted: ".$enc." decrypted: ".$dec;
 
 
 #caeserova sifra
@@ -66,25 +86,25 @@ function Decipher($input, $key)
 #nahrani souboru na sifrovani
 
 #zobrazeni obsahu dokumentu a nasledne rozsifrovani
-$filename = "image.doc";    
+$filename = "image2.doc";    
 $fp = fopen($filename, "r");//open file in read mode    
   
 $contents = fread($fp, filesize($filename));//read file    
 
-$text = fread($fp,filesize("image.doc"));
+$text = fread($fp,filesize("image2.doc"));
 #posun pismenek
 $cipherText = Encipher($text, 3);
 $plainText = Decipher($cipherText, 3);
-$cipherText2 = urlencode($cipherText);
-echo "<a href=\stazeni.php?heslo=$cipherText2>"."xd".'</a>'."<br>"; 
+$cipherText2 = urlencode($cipherText); 
 echo "<br>";
 echo "<br>";
 echo $contents;   
 echo Decipher($contents, 3); 
 fclose($fp);//close file  
 ?> 
+
 <form action="upload2.php" method="post" enctype="multipart/form-data" name="cookie">
-  desifrovani:
+  ceasar: desifrovani:
   <input type="file" name="fileToUpload" id="fileToUpload">
   <input type="submit" value="Upload Image" name="submit">
 </form>
@@ -93,5 +113,26 @@ fclose($fp);//close file
   <input type="file" name="fileToUpload" id="fileToUpload">
   <input type="submit" value="Submit" name="submit">
 </form> 
+<form action="upload4.php" method="post" enctype="multipart/form-data" name="cookie">
+   aes: desifrovani:
+  <input type="file" name="fileToUpload" id="fileToUpload">
+  <input type="submit" value="Upload Image" name="submit">
+</form>
+<form action="upload5.php" method="post" enctype="multipart/form-data" name="cookie">
+  sifrovani:
+  <input type="file" name="fileToUpload" id="fileToUpload">
+  <input type="submit" value="Submit" name="submit">
+</form>
+<form action="upload6.php" method="post" enctype="multipart/form-data" name="cookie">
+  triple des: desifrovani:
+  <input type="file" name="fileToUpload" id="fileToUpload">
+  <input type="submit" value="Upload Image" name="submit">
+</form>
+<form action="upload7.php" method="post" enctype="multipart/form-data" name="cookie">
+  sifrovani:
+  <input type="file" name="fileToUpload" id="fileToUpload">
+  <input type="submit" value="Submit" name="submit">
+</form>
+
 </body>
 </html>

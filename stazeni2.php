@@ -1,6 +1,6 @@
 <?php
 session_start();
-echo $_GET["heslo"];
+echo $_SESSION["text"];
 header('Content-Disposition: attachment; filename="Image.doc"');
 unlink($_SESSION["nazev"]);
 session_destroy();
